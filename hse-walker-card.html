@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HSE Walker Card — AI AutoFill</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0d1117; min-height: 100vh; color: #c9d1d9; padding: 20px 14px; }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  .header { margin-bottom: 24px; border-bottom: 2px solid #f5a623; padding-bottom: 14px; }
+  .header h1 { font-size: 22px; font-weight: 800; color: #f5a623; letter-spacing: 2px; }
+  .header p { font-size: 11px; color: #6e7681; margin-top: 4px; }
+  .card { background: #161b22; border: 1px solid #21262d; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 10px; font-weight: 700; letter-spacing: 3px; color: #f5a623; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #21262d; text-transform: uppercase; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media(max-width:540px){ .grid { grid-template-columns: 1fr; } }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  label { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #6e7681; text-transform: uppercase; }
+  label .req { color: #f85149; }
+  input, select, textarea {
+    background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+    color: #c9d1d9; font-size: 14px; padding: 10px 12px; outline: none;
+    width: 100%; font-family: inherit; transition: border-color 0.2s;
+    appearance: none; -webkit-appearance: none;
+  }
+  input:focus, select:focus { border-color: #f5a623; }
+  .topic-inp { border: 2px solid #f5a623 !important; font-size: 16px !important; padding: 14px 16px !important; color: #fff !important; }
+  .topic-inp:focus { border-color: #f5a623 !important; box-shadow: 0 0 0 3px rgba(245,166,35,0.15); }
+  .btn-gen {
+    width: 100%; margin-top: 14px; padding: 16px;
+    background: #f5a623; color: #000; font-weight: 800; font-size: 16px;
+    letter-spacing: 2px; border: none; border-radius: 6px; cursor: pointer; transition: opacity 0.2s;
+  }
+  .btn-gen:disabled { background: #21262d; color: #6e7681; cursor: not-allowed; }
+  .btn-gen:hover:not(:disabled) { opacity: 0.9; }
+  .status-bar { font-size: 11px; color: #6e7681; margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #6e7681; flex-shrink: 0; }
+  .dot.loading { background: #f5a623; animation: pulse 0.8s infinite; }
+  .dot.ready { background: #2ecc71; }
+  .output-box { background: #0d1117; border: 1px solid #2ecc71; border-radius: 6px; padding: 12px 14px; font-size: 14px; line-height: 1.7; color: #e6edf3; }
+  .output-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: #6e7681; text-transform: uppercase; margin-bottom: 6px; margin-top: 14px; }
+  .card-green { border-color: #2ecc71; }
+  .card-title-green { color: #2ecc71; }
+  .btn-submit {
+    width: 100%; margin-top: 10px; padding: 18px;
+    background: #2ecc71; color: #000; font-weight: 800; font-size: 18px;
+    letter-spacing: 2px; border: none; border-radius: 6px; cursor: pointer; transition: opacity 0.2s;
+  }
+  .btn-submit:hover { opacity: 0.9; }
+  .btn-submit:disabled { background: #21262d; color: #6e7681; cursor: not-allowed; }
+  .note { font-size: 12px; color: #6e7681; margin-top: 12px; line-height: 1.6; background: rgba(245,166,35,0.06); border-left: 3px solid #f5a623; padding: 10px 14px; border-radius: 0 6px 6px 0; }
+  .note strong { color: #f5a623; }
+  .err { color: #f85149; font-size: 13px; margin-top: 8px; }
+  #ai-section { display: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>⚡ HSE WALKER CARD — AI AUTOFILL</h1>
+    <p>SD-202 // SUNDRILLING // AUTOMATED OBSERVATION SYSTEM</p>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="card">
+    <div class="card-title">01 — Your Details</div>
+    <div class="grid">
+
+      <div class="field">
+        <label>Evaluator Name <span class="req">*</span></label>
+        <input type="text" id="evaluator" value="Anandhu S Babu" placeholder="Your full name" />
+      </div>
+
+      <div class="field">
+        <label>Date <span class="req">*</span></label>
+        <input type="date" id="date" />
+      </div>
+
+      <div class="field">
+        <label>Job Position <span class="req">*</span></label>
+        <select id="position">
+          <option value="">— Select Position —</option>
+          <option value="RIG MANAGER">RIG MANAGER</option>
+          <option value="NIGHT TOOLPUSHER">NIGHT TOOLPUSHER</option>
+          <option value="DRILLER (AM)">DRILLER (AM)</option>
+          <option value="DRILLER (PM)">DRILLER (PM)</option>
+          <option value="ASST. DRILLER (AM)" selected>ASST. DRILLER (AM)</option>
+          <option value="ASST. DRILLER (PM)">ASST. DRILLER (PM)</option>
+          <option value="DERRICKMAN (AM)">DERRICKMAN (AM)</option>
+          <option value="DERRICKMAN (PM)">DERRICKMAN (PM)</option>
+          <option value="FLOORMAN (AM)">FLOORMAN (AM)</option>
+          <option value="FLOORMAN (PM)">FLOORMAN (PM)</option>
+          <option value="ROUSTABOUT (AM)">ROUSTABOUT (AM)</option>
+          <option value="ROUSTABOUT (PM)">ROUSTABOUT (PM)</option>
+          <option value="SR. MECHANIC">SR. MECHANIC</option>
+          <option value="SR. ELECTRICIAN">SR. ELECTRICIAN</option>
+          <option value="ASST. MECH/ELECT (PM)">ASST. MECH/ELECT (PM)</option>
+          <option value="ASST. MECH/ELECT (AM)">ASST. MECH/ELECT (AM)</option>
+          <option value="MEDIC (AM)">MEDIC (AM)</option>
+          <option value="MEDIC (PM)">MEDIC (PM)</option>
+          <option value="HSE OFFICER">HSE OFFICER</option>
+          <option value="WAREHOUSEMAN">WAREHOUSEMAN</option>
+          <option value="CRANE OPERATOR (AM)">CRANE OPERATOR (AM)</option>
+          <option value="CRANE OPERATOR (PM)">CRANE OPERATOR (PM)</option>
+          <option value="FORKLIFT OPERATOR (AM)">FORKLIFT OPERATOR (AM)</option>
+          <option value="FORKLIFT OPERATOR (PM)">FORKLIFT OPERATOR (PM)</option>
+          <option value="WELDER (AM)">WELDER (AM)</option>
+          <option value="WELDER (PM)">WELDER (PM)</option>
+          <option value="DRIVER (PM)">DRIVER (PM)</option>
+          <option value="DRIVER (AM)">DRIVER (AM)</option>
+          <option value="CAMP BOSS">CAMP BOSS</option>
+          <option value="CATERING CREW">CATERING CREW</option>
+          <option value="MUD ENGR (SERVICE COMPANY)">MUD ENGR (SERVICE COMPANY)</option>
+          <option value="LOGGING  TEAM (SERVICE COMPANY)">LOGGING TEAM (SERVICE COMPANY)</option>
+          <option value="CASING TEAM (SERVICE COMPANY)">CASING TEAM (SERVICE COMPANY)</option>
+          <option value="TUBING TEAM (SERVICE COMPANY)">TUBING TEAM (SERVICE COMPANY)</option>
+          <option value="CEMENTING TEAM (SERVICE COMPANY)">CEMENTING TEAM (SERVICE COMPANY)</option>
+          <option value="KOC TEAM LEADER">KOC TEAM LEADER</option>
+          <option value="KOC CO. MAN">KOC CO. MAN</option>
+          <option value="KOC HSE">KOC HSE</option>
+          <option value="GENERAL MANAGER">GENERAL MANAGER</option>
+          <option value="DRILL SUPT">DRILL SUPT</option>
+          <option value="HSE MANAGER">HSE MANAGER</option>
+          <option value="FIELD ENGINEER">FIELD ENGINEER</option>
+          <option value="ASSET INTEGRITY COORDINATOR">ASSET INTEGRITY COORDINATOR</option>
+          <option value="MATERIALS MANAGER / SUPERVISOR">MATERIALS MANAGER / SUPERVISOR</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Location Evaluated <span class="req">*</span></label>
+        <select id="location">
+          <option value="">— Select Location —</option>
+          <option>DERRICK CROWN</option><option>DERRICK GENERAL</option><option>MONKEY BOARD</option>
+          <option>STABBING BOARD</option><option>RIG FLOOR</option><option>DOG HOUSE</option>
+          <option>CELLAR / SUBSTRUCTURE AREA</option><option>SHAKER AREA</option><option>TRIP TANK AREA</option>
+          <option>MUD TANK AREA</option><option>MUD MIXING AREA</option><option>MUD PUMP AREA</option>
+          <option>WATER TANK AREA</option><option>FIRE PUMP AREA</option><option>RIG FUEL STORAGE AREA</option>
+          <option>CONTAINER STORAGE AREA</option><option>PARKING AREA</option><option>PRIMARY MUSTER AREA</option>
+          <option>SECONDARY MUSTER AREA</option><option>WELDER WORKSHOP</option>
+          <option>ELECTRICAL / MECHANICAL WORKSHOP</option><option>WAREHOUSE</option>
+          <option>OPEN STORAGE AREA</option><option>CHEMICAL STORAGE AREA</option><option>RIG GARBAGE AREA</option>
+          <option>BREATHING CASCADE AREA</option><option>RIG CAMP WATER AREA</option><option>RIG STP AREA</option>
+          <option>RIG CLINIC</option><option>OFFICES / ACCOMODATIONS</option><option>RIG INSPECTION YARD</option>
+          <option>PIPE RACK AREA</option><option>CEMENTING UNIT AREA</option><option>KOOMEY UNIT AREA</option>
+          <option>GENERATOR / VFD AREA</option><option>PIPE BIN AREA</option><option>CATWALK AREA</option>
+          <option>MAIN CAMP AREA</option><option>MAIN CAMP KITCHEN</option><option>MAIN CAMP COMMON TOILET</option>
+          <option>MAIN CAMP GENERATOR</option><option>MAIN CAMP ACCOMODATION</option>
+          <option>MAIN CAMP FIRE PUMP AREA</option><option>MAIN CAMP STP AREA</option>
+          <option>MAIN CAMP GARBAGE AREA</option><option>MAIN CAMP JR MESS HALL</option>
+          <option>MAIN CAMP SR MESS HALL</option><option>MAIN CAMP REC ROOM</option><option>OTHERS</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Evaluation Result</label>
+        <select id="evalResult">
+          <option value="">— Select —</option>
+          <option>ALL SAFE</option>
+          <option>SUBSTANDARD ACT</option>
+          <option>SUBSTANDARD CONDITION</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Risk Level <span class="req">*</span></label>
+        <select id="risk">
+          <option value="">— Select —</option>
+          <option>HIGH</option><option>MEDIUM</option><option>LOW</option><option>NA</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Substandard Act</label>
+        <select id="subAct">
+          <option>ALL SAFE</option>
+          <option>OPERATING WITHOUT AUTHORITY</option><option>FAILURE TO WARN</option>
+          <option>USE OF IMPROPER / SUBSTANDARD EQUIPMENT</option>
+          <option>IMPROPER PLACING / STACKING / POSITIONING</option><option>IMPROPER LOADING</option>
+          <option>WORKING ON / SERVICING OPERATING MACHINERY</option>
+          <option>WEARING SUBSTANDARD PERSONAL PROTECTIVE EQUIPMENT</option>
+          <option>USING PERSONAL PROTECTIVE EQUIPMENT INCORRECTLY</option>
+          <option>GAMES / HORSEPLAY</option><option>ATTENTION DISTRUCTED</option>
+          <option>FAILURE TO SECURE / MAKE SAFE</option><option>OPERATING AT IMPROPER SPEED</option>
+          <option>IMPROPER USE / IMPROPER APPLICATION OF EQUIPMENT</option><option>IMPROPER MIXING</option>
+          <option>TAKING UP IMPROPER POSITION FOR TASK</option>
+          <option>FAILURE TO WEAR PROTECTIVE EQUIPMENT</option>
+          <option>IMPROPER HANDLING / LIFTING</option>
+          <option>RENDERING SAFETY DEVICES INOPERATIVE</option>
+          <option>DEVIATION FROM STANDARD PROCEDURE / PRACTICE</option>
+          <option>OTHER (SPECIFY):</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Substandard Condition</label>
+        <select id="subCond">
+          <option>ALL SAFE</option>
+          <option>INADEQUATE WARNING SYSTEMS</option><option>DEFECTIVE PROTECTIVE DEVICES</option>
+          <option>NO / INADEQUATE OR DEFECTIVE DEVICES</option><option>LIGHTING SUBSTANDARD</option>
+          <option>NO / INADEQUATE PERSONAL PROTECTION</option><option>SUBSTANDARD MATERIAL</option>
+          <option>INADEQAUTE VENTILATION</option><option>INADEQUATE PROTECTIVE DEVICES</option>
+          <option>EXCESSIVE EMISSIONS</option><option>SUBSTANDARD / DEFECTIVE TOOLS / EQUIPMENT</option>
+          <option>HAZARDOUS ARRANGEMENT / LAYOUT / DISORDER</option><option>SURFACE SUBSTANDARD</option>
+          <option>HAZARDOUS ENVIRONMENTAL CONDITIONS</option><option>NATURAL HAZARDS</option>
+          <option>FIRE &amp; EXPLOSION HAZARDS</option><option>OTHER (SPECIFY):</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Status <span class="req">*</span></label>
+        <select id="status">
+          <option>OPEN</option>
+          <option selected>CLOSE</option>
+        </select>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="card">
+    <div class="card-title">02 — AI Observation Generator</div>
+    <div class="field">
+      <label>What did you observe today? <span class="req">*</span></label>
+      <input type="text" id="topic" class="topic-inp" placeholder="e.g. worker not wearing PPE at rig floor" />
+    </div>
+    <div id="err" class="err" style="display:none"></div>
+    <button class="btn-gen" id="genBtn" onclick="generate()">⚡ GENERATE WITH AI</button>
+    <div class="status-bar">
+      <div class="dot" id="dot"></div>
+      <span id="statusMsg">Type your topic and click Generate</span>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="card card-green" id="ai-section">
+    <div class="card-title card-title-green">03 — Generated Content ✅</div>
+
+    <div class="output-label">OBSERVATION</div>
+    <div class="output-box" id="obsOut"></div>
+
+    <div class="output-label">IMMEDIATE CORRECTIVE ACTION</div>
+    <div class="output-box" id="immOut"></div>
+
+    <div class="output-label">RECOMMENDED PREVENTIVE ACTION</div>
+    <div class="output-box" id="prevOut"></div>
+
+    <button class="btn-submit" id="submitBtn" onclick="openForm()">
+      🚀 OPEN PRE-FILLED GOOGLE FORM →
+    </button>
+    <div class="note">
+      <strong>How to submit:</strong> Click the green button → Google Form opens pre-filled → Just verify and hit <strong>Submit</strong> ✅
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Set today's date
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  document.getElementById('date').value = `${yyyy}-${mm}-${dd}`;
+
+  // Enter key on topic
+  document.getElementById('topic').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') generate();
+  });
+
+  let aiData = null;
+
+  function setStatus(state, msg) {
+    const dot = document.getElementById('dot');
+    dot.className = 'dot' + (state ? ' ' + state : '');
+    document.getElementById('statusMsg').textContent = msg;
+  }
+
+  async function generate() {
+    const topic = document.getElementById('topic').value.trim();
+    const errEl = document.getElementById('err');
+    if (!topic) {
+      errEl.textContent = '⚠ Please enter a topic first!';
+      errEl.style.display = 'block';
+      return;
+    }
+    errEl.style.display = 'none';
+
+    const btn = document.getElementById('genBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ GENERATING...';
+    setStatus('loading', 'AI is writing your HSE observation...');
+    aiData = null;
+    document.getElementById('ai-section').style.display = 'none';
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: `You are an expert HSE officer on an oil drilling rig. Generate professional HSE walker card content.
+Respond ONLY with a valid JSON object. No markdown, no backticks, no extra text whatsoever.
+Format exactly: {"observation":"...","immediate":"...","preventive":"..."}
+- observation: 2-3 sentences describing what was observed on site
+- immediate: 2-3 sentences of immediate corrective actions taken
+- preventive: 2-3 sentences of recommended long-term preventive actions
+Use formal HSE terminology.`,
+          messages: [{ role: 'user', content: `HSE observation topic: "${topic}"` }]
+        })
+      });
+
+      const data = await res.json();
+      const raw = (data.content || []).map(b => b.text || '').join('');
+      aiData = JSON.parse(raw.replace(/```json|```/g, '').trim());
+
+      document.getElementById('obsOut').textContent  = aiData.observation;
+      document.getElementById('immOut').textContent  = aiData.immediate;
+      document.getElementById('prevOut').textContent = aiData.preventive;
+      document.getElementById('ai-section').style.display = 'block';
+      setStatus('ready', 'Content ready! Open the form below ↓');
+
+    } catch(e) {
+      errEl.textContent = '⚠ Generation failed. Please try again.';
+      errEl.style.display = 'block';
+      setStatus('', 'Error — try again');
+    }
+
+    btn.disabled = false;
+    btn.textContent = '⚡ REGENERATE';
+  }
+
+  function openForm() {
+    if (!aiData) return;
+
+    const evaluator  = document.getElementById('evaluator').value;
+    const dateVal    = document.getElementById('date').value;
+    const position   = document.getElementById('position').value;
+    const location   = document.getElementById('location').value;
+    const evalResult = document.getElementById('evalResult').value;
+    const risk       = document.getElementById('risk').value;
+    const subAct     = document.getElementById('subAct').value;
+    const subCond    = document.getElementById('subCond').value;
+    const status     = document.getElementById('status').value;
+
+    const base = 'https://docs.google.com/forms/d/e/1FAIpQLScwIcpFcve5-3Rj86RXhQtSfKEpQmuDktPvjOCgTTQl3qRRug/viewform?usp=pp_url';
+    const p = new URLSearchParams();
+
+    if (dateVal) {
+      const [y, m, dv] = dateVal.split('-');
+      p.append('entry.184409523_month', String(parseInt(m)));
+      p.append('entry.184409523_day',   String(parseInt(dv)));
+      p.append('entry.184409523_year',  y);
+    }
+
+    p.append('entry.79759714',   evaluator);
+    p.append('entry.713386495',  position);
+    p.append('entry.562865770',  location);
+    p.append('entry.1928680332', evalResult);
+    p.append('entry.1730618972', risk);
+    p.append('entry.812942020',  subAct);
+    p.append('entry.1421089594', subCond);
+    p.append('entry.1271690740', aiData.observation);
+    p.append('entry.388926098',  aiData.immediate);
+    p.append('entry.1574512438', aiData.preventive);
+    p.append('entry.1005136507', status);
+
+    window.open(base + '&' + p.toString(), '_blank');
+  }
+</script>
+</body>
+</html>
